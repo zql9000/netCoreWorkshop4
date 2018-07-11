@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using netCoreWorkshop.Business;
+using Microsoft.EntityFrameworkCore;
 
 namespace netCoreWorkshop
 {
@@ -25,6 +26,11 @@ namespace netCoreWorkshop
             services.AddTransient<IArticlesService, ArticlesService>();
 
             services.AddMvc();
+
+            services.AddDbContext<Data.ArticlesContext>(options =>
+            {
+                options.UseSqlite(Configuration.GetConnectionString("Articles"));
+            });
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)

@@ -1,21 +1,44 @@
 using System.Collections.Generic;
 using netCoreWorkshop.Entities;
 using System.Linq;
+using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using netCoreWorkshop.Data;
 
 namespace netCoreWorkshop.Business
 {                                                                                 
     public class ArticlesService : IArticlesService
     {
-        public List<Article> GetAllArticles() => Article.DataSource;
+        private readonly ArticlesContext _context;
+        private readonly ILogger<ArticlesService> _logger; 
+
+        public ArticlesService(ArticlesContext context, ILogger<ArticlesService> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
+
+        public List<Article> GetAllArticles() => _context.Set<Article>().ToList();
             
-        public Article GetOneArticle(int id) => Article.DataSource.Where(m => m.Id == id).FirstOrDefault();
+        public Article GetOneArticle(int id)
+        {
+            var article = _context.Articles.SingleOrDefault(m => m.Id == id);
+            
+            return article;
+        }
         
         public Article AddArticle(Article article)
         {
-            article.Id = GetAllArticles().Count() + 1;
-            Article.DataSource.Add(article);
+            _logger.LogDebug("Starting save");
 
-            return article;
+            var newArticle = new Article { Title = article.Title };
+
+            _context.Articles.Add(newArticle);
+            _context.SaveChanges(); 
+
+            _logger.LogDebug("Finished save");
+
+            return newArticle;
         }
 
         public Article EditArticle(int id, Article article)
@@ -34,6 +57,8 @@ namespace netCoreWorkshop.Business
 
             currentArticle.Title = article.Title;
 
+            _context.SaveChanges(); 
+
             return currentArticle;
         }
 
@@ -41,7 +66,12 @@ namespace netCoreWorkshop.Business
         {
             var article = GetOneArticle(id);
 
-            Article.DataSource.Remove(article);
+            _logger.LogDebug("Starting delete");
+
+            _context.Articles.Remove(article);
+            _context.SaveChanges(); 
+
+            _logger.LogDebug("Finished delete");
         }
     }
 }
